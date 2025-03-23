@@ -1,9 +1,9 @@
 from fastapi import FastAPI, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from integrations.airtable import authorize_airtable, get_items_airtable, oauth2callback_airtable, get_airtable_credentials
-from integrations.notion import authorize_notion, get_items_notion, oauth2callback_notion, get_notion_credentials
-from integrations.hubspot import authorize_hubspot, get_hubspot_credentials, get_items_hubspot, oauth2callback_hubspot
+from backend.integrations.airtable import authorize_airtable, get_items_airtable, oauth2callback_airtable, get_airtable_credentials
+from backend.integrations.notion import authorize_notion, get_items_notion, oauth2callback_notion, get_notion_credentials
+from backend.integrations.hubspot import authorize_hubspot, get_hubspot_credentials, get_items_hubspot, oauth2callback_hubspot
 
 app = FastAPI()
 
@@ -27,6 +27,9 @@ def read_root():
 # Airtable
 @app.post('/integrations/airtable/authorize')
 async def authorize_airtable_integration(user_id: str = Form(...), org_id: str = Form(...)):
+    print("user_id: "+user_id)
+    print("org_id: "+org_id)
+
     return await authorize_airtable(user_id, org_id)
 
 @app.get('/integrations/airtable/oauth2callback')
@@ -72,6 +75,6 @@ async def oauth2callback_hubspot_integration(request: Request):
 async def get_hubspot_credentials_integration(user_id: str = Form(...), org_id: str = Form(...)):
     return await get_hubspot_credentials(user_id, org_id)
 
-@app.post('/integrations/hubspot/get_hubspot_items')
+@app.post('/integrations/hubspot/load')
 async def load_slack_data_integration(credentials: str = Form(...)):
     return await get_items_hubspot(credentials)
