@@ -6,14 +6,17 @@ from fastapi.responses import HTMLResponse
 import httpx
 import asyncio
 from fastapi import Request
-
+import requests
 from backend.redis_client import add_key_value_redis, get_value_redis, delete_key_redis
+from backend.integrations.integration_item import IntegrationItem
 
 CLIENT_ID = '6c007d68-a6a1-4b2e-a71a-1a2c2988d24b'
 CLIENT_SECRET = 'b4e1f93d-c23e-454c-9157-b410b942d1fb'
 REDIRECT_URI = 'http://localhost:8000/integrations/hubspot/oauth2callback'
 authorization_url = f'https://app.hubspot.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fintegrations%2Fhubspot%2Foauth2callback'
-scope = 'automation%20oauth'
+scope = 'automation oauth crm.objects.companies.read crm.objects.contacts.read crm.objects.deals.read tickets'
+integration_item_type_name_map = {'companies': "name", 'deals': "dealname", 'contacts': "firstname",
+                                  'tickets': "subject"}
 
 
 async def authorize_hubspot(user_id, org_id):
@@ -87,11 +90,47 @@ async def get_hubspot_credentials(user_id, org_id):
 
     return credentials
 
-async def create_integration_item_metadata_object(response_json):
-    # TODO
-    pass
+
+def create_integration_item_metadata_object(
+        response_json: str, item_type: str, parent_id=None, parent_name=None
+) -> IntegrationItem:
+    integration_item_metadata = IntegrationItem(
+        id=response_json.get('id', None) + '_' + item_type,
+        name=response_json['properties'].get(integration_item_type_name_map.get(item_type), None),
+        type=item_type,
+        parent_id=parent_id,
+        parent_path_or_name=parent_name,
+    )
+
+    return integration_item_metadata
+
+
+def fetch_items(
+        access_token: str, url: str, aggregated_response: list,
+) -> dict:
+    """Fetching the list of companies"""
+    headers = {'Authorization': f'Bearer {access_token}'}
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        print(response.content)
+    if response.status_code == 200:
+        results = response.json().get('results', {})
+
+        for item in results:
+            aggregated_response.append(item)
+        return
 
 
 async def get_items_hubspot(credentials):
-    # TODO
-    pass
+    credentials = json.loads(credentials)
+    list_of_integration_item_metadata = []
+    for object_type in integration_item_type_name_map.keys():
+        url = f'https://api.hubapi.com/crm/v3/objects/{object_type}'
+        list_of_responses = []
+        fetch_items(credentials.get('access_token'), url, list_of_responses)
+        for response in list_of_responses:
+            list_of_integration_item_metadata.append(
+                create_integration_item_metadata_object(response, object_type)
+            )
+    print(f'list_of_integration_item_metadata: {list_of_integration_item_metadata}')
+    return list_of_integration_item_metadata
