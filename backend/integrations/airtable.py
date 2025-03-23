@@ -14,9 +14,16 @@ import requests
 from backend.integrations.integration_item import IntegrationItem
 
 from backend.redis_client  import add_key_value_redis, get_value_redis, delete_key_redis
+import os
 
-CLIENT_ID = '5979e231-c3e4-404b-a0cd-6b638a0ec5a9'
-CLIENT_SECRET = 'effc805f36e23a3c3ad3d6d89bd10b7b082fbe168739c01b627cad5bfee0851e'
+#export client_id and client_secret as environment variables before running this method
+CLIENT_ID = os.environ.get('AIRTABLE_CLIENT_ID')
+CLIENT_SECRET = os.environ.get('AIRTABLE_CLIENT_SECRET')
+
+if not CLIENT_ID or not CLIENT_SECRET:
+    raise ValueError("Airtable client ID or secret not set as environment variables.")
+
+
 REDIRECT_URI = 'http://localhost:8000/integrations/airtable/oauth2callback'
 authorization_url = f'https://airtable.com/oauth2/v1/authorize?client_id={CLIENT_ID}&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fintegrations%2Fairtable%2Foauth2callback'
 

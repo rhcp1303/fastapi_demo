@@ -9,9 +9,17 @@ from fastapi import Request
 import requests
 from backend.redis_client import add_key_value_redis, get_value_redis, delete_key_redis
 from backend.integrations.integration_item import IntegrationItem
+import os
 
-CLIENT_ID = '6c007d68-a6a1-4b2e-a71a-1a2c2988d24b'
-CLIENT_SECRET = 'b4e1f93d-c23e-454c-9157-b410b942d1fb'
+#export client_id and client_secret as environment variables before running this method
+
+CLIENT_ID = os.environ.get('HUBSPOT_CLIENT_ID')
+CLIENT_SECRET = os.environ.get('HUBSPOT_CLIENT_SECRET')
+
+if not CLIENT_ID or not CLIENT_SECRET:
+    raise ValueError("Hubspot client ID or secret not set as environment variables.")
+
+
 REDIRECT_URI = 'http://localhost:8000/integrations/hubspot/oauth2callback'
 authorization_url = f'https://app.hubspot.com/oauth/authorize?client_id={CLIENT_ID}&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fintegrations%2Fhubspot%2Foauth2callback'
 scope = 'automation oauth crm.objects.companies.read crm.objects.contacts.read crm.objects.deals.read tickets'

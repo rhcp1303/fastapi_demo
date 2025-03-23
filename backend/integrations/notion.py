@@ -11,9 +11,17 @@ import requests
 from backend.integrations.integration_item import IntegrationItem
 
 from backend.redis_client import add_key_value_redis, get_value_redis, delete_key_redis
+import os
 
-CLIENT_ID = '1bed872b-594c-801f-bb25-0037b5e78b8b'
-CLIENT_SECRET = 'secret_WxAX4BgO02HgAqu0ubQ50xCCzBBMoHYNZmFjpHOWd4E'
+#export client_id and client_secret as environment variables before running this method
+
+CLIENT_ID = os.environ.get('NOTION_CLIENT_ID')
+CLIENT_SECRET = os.environ.get('NOTION_CLIENT_SECRET')
+
+if not CLIENT_ID or not CLIENT_SECRET:
+    raise ValueError("Notion client ID or secret not set as environment variables.")
+
+
 encoded_client_id_secret = base64.b64encode(f'{CLIENT_ID}:{CLIENT_SECRET}'.encode()).decode()
 REDIRECT_URI = 'http://localhost:8000/integrations/notion/oauth2callback'
 authorization_url = f'https://api.notion.com/v1/oauth/authorize?client_id={CLIENT_ID}&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fintegrations%2Fnotion%2Foauth2callback'
